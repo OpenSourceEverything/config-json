@@ -1,0 +1,7 @@
+﻿{
+  "simulators": {
+    "ble": {
+      "deviceName": "ble-sim"
+    }
+  }
+}

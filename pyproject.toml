@@ -1,0 +1,22 @@
+﻿[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "config-json"
+version = "0.1.0"
+description = "Minimal config init + validate tool"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "jsonschema>=4.22.0",
+]
+
+[project.scripts]
+config-json = "config_json.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
