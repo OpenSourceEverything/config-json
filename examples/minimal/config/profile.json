@@ -1,0 +1,5 @@
+{
+  "app": "dev.json",
+  "db": "local.json",
+  "simulators/ble": "dev.json"
+}

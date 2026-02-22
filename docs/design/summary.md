@@ -11,7 +11,9 @@ Root `config/config.schema.json` is the app schema (include `"$schema"` there).
 config/
   config.schema.json
   active.txt
-  active.dev.json
+  profile.json
+  profile.2.json
+  active-overrides.txt
   overrides.json
   app/
     active.txt
@@ -32,7 +34,7 @@ config/
   - refuses overwrite unless `--force`
 - `config-json validate [--root .] [--no-validate-per-file]`
   - merges + validates
-  - writes `artifacts/effective-config.json`
+  - writes `config/config.json`
 
 ## Rules
 
@@ -41,7 +43,9 @@ config/
 - Domain = any folder containing `active.txt`.
 - Domain id = folder path relative to `config/` using `/` (ex: `simulators/ble`).
 - Active file precedence:
-  - if root `config/active.txt` exists, load `config/<that filename>` as `{ "<domain-id>": "<profile>.json" }`
+  - `config/active.txt` contains exactly one filename (for example `profile.json`)
+  - if root selector exists, load `config/<that filename>` as `{ "<domain-id>": "<profile>.json" }`
+  - that one map file can define active files for multiple domains/modules
   - mapped domains use mapped filename
   - unmapped domains use `<domain>/active.txt`
 - Base merge order = lexical by full domain id.
@@ -53,8 +57,10 @@ config/
 
 ### Overrides
 
-- Optional single file: `config/overrides.json`.
-- Merged last: `effective = deep_merge(base, overrides)`.
+- If `config/active-overrides.txt` exists: it must be a JSON array of filenames.
+- Load each `config/<filename>` in listed order and merge in-order.
+- If selector is absent, optional fallback is `config/overrides.json`.
+- Overrides always apply on top of the active-selected base.
 
 ### deep_merge
 
@@ -78,12 +84,15 @@ config/
 
 1) Discover all domain folders (`active.txt`).
 2) Sort domain ids lexically.
-3) If root `config/active.txt` exists: load `config/<that filename>` map.
+3) If root `config/active.txt` exists: read one filename, then load `config/<that filename>` map.
 4) For each domain in order: resolve active filename (root map or domain active.txt), load JSON, `base = deep_merge(base, c)`.
-5) If `config/overrides.json` exists: load and merge last.
-6) Write `artifacts/effective-config.json`.
-7) Run per-file overlay validation (default on).
-8) Run effective-config validation.
+5) Resolve overrides:
+   - if `config/active-overrides.txt` exists: load listed files in-order and merge in-order
+   - else if `config/overrides.json` exists: load once
+6) Merge overrides last.
+7) Write `config/config.json`.
+8) Run per-file overlay validation (default on).
+9) Run effective-config validation.
 
 ### Nested Example
 

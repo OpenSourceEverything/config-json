@@ -18,7 +18,7 @@ def _json_pointer(path_parts: Iterable[Any]) -> str:
 
 
 def _write_effective(root: Path, effective: Any) -> Path:
-    out = root / "artifacts" / "effective-config.json"
+    out = root / "config" / "config.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(effective, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return out

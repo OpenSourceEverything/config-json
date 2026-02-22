@@ -5,6 +5,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .merge import deep_merge
+
 
 @dataclass(frozen=True)
 class DomainConfig:
@@ -150,6 +152,30 @@ def load_active_domain_configs(config_root: Path) -> tuple[list[DomainConfig], l
 
 
 def load_overrides(config_root: Path) -> tuple[Any, list[str]]:
+    selector_path = config_root / "active-overrides.txt"
+    if selector_path.exists():
+        data, selector_error = _load_json(selector_path, "active overrides selector")
+        if selector_error:
+            return {}, [selector_error]
+        if not isinstance(data, list):
+            return {}, [f"active overrides selector: {selector_path} must be a JSON array of filenames"]
+
+        errors: list[str] = []
+        merged: Any = {}
+        for index, raw_name in enumerate(data):
+            if not isinstance(raw_name, str) or not _valid_active_filename(raw_name):
+                errors.append(
+                    f"active overrides selector: index {index} must be a '<profile>.json' filename"
+                )
+                continue
+            override_path = config_root / raw_name
+            payload, payload_error = _load_json(override_path, f"override '{raw_name}'")
+            if payload_error:
+                errors.append(payload_error)
+                continue
+            merged = deep_merge(merged, payload)
+        return merged, errors
+
     overrides_path = config_root / "overrides.json"
     if not overrides_path.exists():
         return {}, []
