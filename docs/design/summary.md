@@ -1,4 +1,4 @@
-﻿# Config Layout (Canonical)
+# Config Layout (Canonical)
 
 ## Summary
 
@@ -32,9 +32,11 @@ config/
 - `config-json init [--template base] [--dest .] [--force]`
   - copies `templates/base/config` to `<dest>/config`
   - refuses overwrite unless `--force`
-- `config-json validate [--root .] [--no-validate-per-file]`
+- `config-json validate [--root .] [--no-validate-per-file] [--write-wrapped-effective]`
   - merges + validates
   - writes `config/config.json`
+- `config-json resolve [--root .] [--format text|json] [--include-effective] [--wrap-domains]`
+  - prints resolved domain -> active file selection map
 
 ## Rules
 
@@ -43,11 +45,12 @@ config/
 - Domain = any folder containing `active.txt`.
 - Domain id = folder path relative to `config/` using `/` (ex: `simulators/ble`).
 - Active file precedence:
-  - `config/active.txt` contains exactly one filename (for example `profile.json`)
+  - pointer files (`config/active.txt`, `<domain>/active.txt`) contain exactly one active value (blank lines and `#` comments allowed)
+  - root selector value is one filename (for example `profile.json`)
   - if root selector exists, load `config/<that filename>` as `{ "<domain-id>": "<profile>.json" }`
   - that one map file can define active files for multiple domains/modules
-  - mapped domains use mapped filename
-  - unmapped domains use `<domain>/active.txt`
+  - if root selector exists, every discovered domain-id must be explicitly mapped (no implicit fallback)
+  - if root selector is absent, each domain uses `<domain>/active.txt`
 - Base merge order = lexical by full domain id.
 
 ### Schema
@@ -71,6 +74,7 @@ config/
 ### Validate Contract
 
 - `active.txt` is readable for each domain.
+- each domain `active.txt` must contain one `<profile>.json` filename (strict filename-only form).
 - referenced active JSON exists.
 - selected JSON parses.
 - per-file pass (default on):
@@ -85,14 +89,15 @@ config/
 1) Discover all domain folders (`active.txt`).
 2) Sort domain ids lexically.
 3) If root `config/active.txt` exists: read one filename, then load `config/<that filename>` map.
-4) For each domain in order: resolve active filename (root map or domain active.txt), load JSON, `base = deep_merge(base, c)`.
-5) Resolve overrides:
+4) If root selector exists, require explicit mapping for every discovered domain-id; otherwise iterate all discovered domains.
+5) For each selected domain in order: resolve active filename (root map or domain active.txt), load JSON, `base = deep_merge(base, c)`.
+6) Resolve overrides:
    - if `config/active-overrides.txt` exists: load listed files in-order and merge in-order
    - else if `config/overrides.json` exists: load once
-6) Merge overrides last.
-7) Write `config/config.json`.
-8) Run per-file overlay validation (default on).
-9) Run effective-config validation.
+7) Merge overrides last.
+8) Write `config/config.json`.
+9) Run per-file overlay validation (default on).
+10) Run effective-config validation.
 
 ### Nested Example
 

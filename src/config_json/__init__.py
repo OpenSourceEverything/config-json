@@ -1,4 +1,1 @@
-﻿"""Minimal config-json package."""
-
-__all__ = ["__version__"]
-__version__ = "0.1.0"
+from py import *  # noqa: F401,F403
